@@ -1,60 +1,37 @@
-def gv
-
-pipeline {
+  pipeline {
 	
 
 	agent any
-	parameters {
-		choice(name: 'VERSION', choices: ['1.1.0', '1.2.0', '1.3.0'], description:'')
-		booleanParam(name: 'executeTests', defaultValue: true, description:'')
+	tools {
+		maven 'maven-3.9'
 	}
-	// environment{
-	// 	NEW_VERSION = '1.3.0'
-	// 	SERVER_CREDENTIALS = credentials('server-credentials')
-	// }
 
 	stages {
-		stage("init") {
-			steps {
-				script {
-					gv = load "script.groovy"
-				}
-			}
-		}
-		stage("build") {
+		stage("build jar") {
 			steps {
 				script{
-					gv.buildApp()
+					echo 'building the application...'
+					sh  'mvn package'
 				}
-				// echo 'building the application...'
-				// echo "building version ${NEW_VERSION}"
 			}
 		}
-		stage("test") {
-			when {
-				expression {
-					params.executeTests
-				}
-			}
+		stage("build image") {
 			steps {
-				script {
-					gv.testApp()
+				script{
+					echo 'building the docker image...'
+					withCredentials([usernamePassword(credentialsID: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+						sh 'docker build -t nirou42/demo-app:jma-1.0 .'
+						sh 'echo $PASS | docker login -u $USER --password-stdin'
+						sh 'docker push nirou42/demo-app:jma-1.0'
+					}
 				}
-				// echo 'testing the application...'
 			}
 		}
 		stage("deploy") {
 			steps {
 				script {
-					gv.deployApp()
+					echo 'deploying the application...'
 				}
-				// echo 'deploy the application...'
-				// echo "deploying version ${params.VERSION}"
-				// withCredentials([
-				// 	usernamePassword(credentials: 'server-credentials', usernameVariable: USER, passwordVariable: PWD)
-				// ]) {
-				// 	sh "some script ${USER} ${PWD}"
-				// }
 			}
 		}
 	}
