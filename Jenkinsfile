@@ -37,7 +37,7 @@ pipeline {
 				}
 			}
 			steps {
-				scripts {
+				script {
 					gv.testApp()
 				}
 				// echo 'testing the application...'
@@ -45,7 +45,7 @@ pipeline {
 		}
 		stage("deploy") {
 			steps {
-				scripts {
+				script {
 					gv.deployApp()
 				}
 				// echo 'deploy the application...'
